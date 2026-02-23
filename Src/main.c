@@ -1,7 +1,9 @@
 /*
  * Petrik coding this shit 
  * 22.02.26
- * 
+ * And Lyoha too
+ * 23.02.26 
+ *
  * Demo board connections
  * 
  * disp st7796U 320x480
@@ -79,4 +81,5 @@ int main(void)
         delay(500000);
     }
 }
+
 
