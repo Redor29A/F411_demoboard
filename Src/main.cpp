@@ -50,7 +50,7 @@ void delay(volatile uint32_t t)
 {
     while (t--) {
         __NOP();
-    }
+    }   
 }
 
 int main(void)
@@ -64,7 +64,7 @@ int main(void)
     /* 2. PC13 -> режим OUTPUT */
     GPIOC->MODER &= ~(3U << (13 * 2));   // очистить биты
     GPIOC->MODER |=  (1U << (13 * 2));   // 01 = output
-
+    
     /* 3. Тип выхода push-pull */
     GPIOC->OTYPER &= ~(1U << 13);
 
