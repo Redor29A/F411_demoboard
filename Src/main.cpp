@@ -43,9 +43,10 @@
  * 8(NC) 
  */
 
+extern "C" {
 #include "stm32f4xx.h"
 #include "main.h"
-
+}
 
 void delay(volatile uint32_t t)
 {
