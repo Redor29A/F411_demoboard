@@ -5,7 +5,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if !defined(STM32F411xE) 
 #define STM32F411xE 
+#endif
+
 #include "stm32f4xx.h"
 
 #ifdef __cplusplus
