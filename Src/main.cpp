@@ -45,12 +45,30 @@
 
 #include "main.h"
 
+#define CS_LOW()    (GPIOA->BSRR = GPIO_BSRR_BR4)
+#define CS_HIGH()   (GPIOA->BSRR = GPIO_BSRR_BS4)
 
-void delay(volatile uint32_t t)
+#define DC_CMD()    (GPIOA->BSRR = GPIO_BSRR_BR2)
+#define DC_DATA()   (GPIOA->BSRR = GPIO_BSRR_BS2)
+
+#define BL_ON()     (GPIOA->BSRR = GPIO_BSRR_BS1)
+#define BL_OFF()    (GPIOA->BSRR = GPIO_BSRR_BR1)
+
+void delay_us(uint32_t us)
 {
-    while (t--) {
-        __NOP();
-    }   
+    volatile uint32_t n;
+
+    while (us--)
+    {
+        n = 4;
+        while (n--)
+            __NOP();
+    }
+}
+
+void delay_ms(uint32_t ms)
+{
+    delay_us(ms * 1000);
 }
 
 void RCC_config(){ //25 MHz all clocks
@@ -60,6 +78,35 @@ void RCC_config(){ //25 MHz all clocks
     RCC->CFGR |= RCC_CFGR_SW_HSE;
     while (!(RCC->CFGR & RCC_CFGR_SWS_HSE));
     SystemCoreClockUpdate(); 
+}
+
+void SPI1_config()
+{
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
+    __NOP(); __NOP();
+    //NSS output enabled (SSM = 0, SSOE = 1) CPOL = 0 CPHA = 0 LSBFIRST = 0 DFF = 0
+    //FRF   MSTR and SPE bits must be set 
+    SPI1->CR1 = 0; //сброс всех битов
+    SPI1->CR2 = 0; //сброс всех битов
+    SPI1->I2SCFGR = 0; //сброс всех битов
+
+    SPI1->CR1 |= SPI_CR1_MSTR; //режим ведущего
+    SPI1->CR1 |= (0b000 << SPI_CR1_BR_Pos); //делитель 4 (25 mhz / 16 = 1,5625 mhz)
+    SPI1->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI; //ручное управление NSS
+
+    SPI1->CR1 |= SPI_CR1_SPE; //включить SPI
+}
+
+void SPI1_write(uint8_t data){
+    SPI1->DR = data;
+    while (!(SPI1->SR & SPI_SR_TXE));  
+    //while (SPI1->SR & SPI_SR_BSY);  
+}
+
+uint8_t SPI1_read(uint8_t timeout = 10){
+    while (!(SPI1->SR & SPI_SR_RXNE)); 
+    uint8_t RX_data = SPI1->DR;
+    return RX_data;
 }
 
 void display_pins_config(){
@@ -117,8 +164,7 @@ void display_pins_config(){
     GPIOA->MODER &= ~GPIO_MODER_MODER3;   
     GPIOA->MODER |=  (1U << GPIO_MODER_MODER3_Pos);   // 01 = output 
 
-    GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;
-    GPIOA->OTYPER |= (1U << GPIO_OTYPER_OT3_Pos);         // open-drain 
+    GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;       // push-pull
 
     GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED3;
     GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED3_Pos);   // высокая скорость
@@ -137,34 +183,198 @@ void display_pins_config(){
     GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL4_Pos);   // AF5 = SPI1  NSS
 }
 
-void Display_reset(){
-    GPIOA->ODR |= GPIO_ODR_OD3;
-    delay(1000);
-    GPIOA->ODR &= ~GPIO_ODR_OD3;
+void display_reset(){
+    GPIOA->BSRR = GPIO_BSRR_BR3;  // LOW
+    delay_ms(20);
+
+    GPIOA->BSRR = GPIO_BSRR_BS3;  // HIGH
+    delay_ms(120);
 }
 
-void SPI1_config()
+void display_set_DC(bool DC){
+    if(DC){
+        GPIOA->ODR |= GPIO_ODR_OD2; //data
+    }
+    else{
+        GPIOA->ODR &= ~GPIO_ODR_OD2;//command
+    }
+}
+
+void display_set_BL(bool BL){
+    if(BL){
+        GPIOA->ODR |= GPIO_ODR_OD1;
+    }
+    else{
+        GPIOA->ODR &= ~GPIO_ODR_OD1;
+    }
+}
+
+void lcd_cmd(uint8_t cmd)
 {
-    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
-    __NOP(); __NOP();
-    //NSS output enabled (SSM = 0, SSOE = 1) CPOL = 0 CPHA = 0 LSBFIRST = 0 DFF = 0
-    //FRF   MSTR and SPE bits must be set 
-    SPI1->CR1 = 0; //сброс всех битов
-    SPI1->CR2 = 0; //сброс всех битов
-    SPI1->I2SCFGR = 0; //сброс всех битов
+    DC_CMD();
+    CS_LOW();
 
-    SPI1->CR1 |= SPI_CR1_MSTR; //режим ведущего
-    SPI1->CR1 |= SPI_CR1_BR_2; //делитель 32
-    SPI1->CR2 |= SPI_CR2_SSOE; //автоматическое управление NSS
+    SPI1_write(cmd);
 
-    SPI1->CR1 |= SPI_CR1_SPE; //включить SPI
+    CS_HIGH();
+}
+
+void lcd_data(uint8_t data)
+{
+    DC_DATA();
+    CS_LOW();
+
+    SPI1_write(data);
+
+    CS_HIGH();
+}
+
+void lcd_set_addr(uint16_t x0, uint16_t y0,
+                  uint16_t x1, uint16_t y1)
+{
+    lcd_cmd(0x2A);  // Column
+    lcd_data(x0 >> 8);
+    lcd_data(x0);
+    lcd_data(x1 >> 8);
+    lcd_data(x1);
+
+    lcd_cmd(0x2B);  // Row
+    lcd_data(y0 >> 8);
+    lcd_data(y0);
+    lcd_data(y1 >> 8);
+    lcd_data(y1);
+
+    lcd_cmd(0x2C);  // Memory Write
+}
+
+void lcd_set_pixel(uint16_t x, uint16_t y, uint16_t color)
+{
+    lcd_set_addr(x, y, x, y);
+
+    DC_DATA();
+    CS_LOW();
+
+    SPI1_write(color >> 8);
+    SPI1_write(color);
+
+    CS_HIGH();
+}
+
+void lcd_fill(uint16_t color)
+{
+    lcd_set_addr(0, 0, 319, 479);
+
+    DC_DATA();
+    CS_LOW();
+
+    for (uint32_t i = 0; i < 320UL * 480; i++)
+    {
+        SPI1_write(color >> 8);
+        SPI1_write(color);
+    }
+
+    CS_HIGH();
+}
+
+void lcd_test_gradient()
+{
+    lcd_set_addr(0, 0, 319, 479);
+
+    DC_DATA();
+    CS_LOW();
+
+    for (uint16_t y = 0; y < 480; y++)
+    {
+        for (uint16_t x = 0; x < 320; x++)
+        {
+            uint16_t r = (x * 31) / 319;
+            uint16_t g = (y * 63) / 479;
+            uint16_t b = ((x + y) * 31) / 798;
+
+            uint16_t color = (r << 11) | (g << 5) | b;
+
+            SPI1_write(color >> 8);
+            SPI1_write(color);
+        }
+    }
+
+    CS_HIGH();
+}
+
+uint16_t lcd_read_pixel(uint16_t x, uint16_t y)
+{
+    uint16_t color;
+
+    lcd_set_addr(x, y, x, y);
+
+    lcd_cmd(0x2E);   // Memory Read
+
+    DC_DATA();
+    CS_LOW();
+
+    SPI1_write(0x00);      // dummy
+    SPI1_read();
+
+    uint8_t r = SPI1_read();
+    uint8_t g = SPI1_read();
+    uint8_t b = SPI1_read();
+
+    CS_HIGH();
+
+    // преобразуем RGB888 → RGB565
+    color = ((r & 0xF8) << 8) |
+            ((g & 0xFC) << 3) |
+            (b >> 3);
+
+    return color;
+}
+
+void display_init(){
+    BL_ON();
+
+    display_reset();
+
+    lcd_cmd(0x11);        // Sleep Out
+    delay_ms(120);
+
+    lcd_cmd(0x36);        // MADCTL
+    lcd_data(0x48);       // поворот + RGB
+
+    lcd_cmd(0x3A);        // Pixel format
+    lcd_data(0x55);       // 16-bit
+
+    lcd_cmd(0x21);        // Inversion ON (часто нужно)
+
+    lcd_cmd(0x29);        // Display ON
+    delay_ms(20);
+
 }
 
 int main(void)
 {
     RCC_config();
     display_pins_config(); //настраиваем пины для дисплея   
-    //SPI1_config(); //настраиваем SPI1 для дисплея
+    SPI1_config(); //настраиваем SPI1 для дисплея
+    display_init();
+
+    lcd_fill(0xFFFF); // белый
+    delay_ms(1000);
+
+    lcd_fill(0x0000); // чёрный
+    delay_ms(1000);
+
+    lcd_fill(0xF800); // красный
+    delay_ms(1000);
+
+    lcd_fill(0x07E0); // зелёный
+    delay_ms(1000);
+
+    lcd_fill(0x001F); // синий
+    delay_ms(1000);
+
+    lcd_test_gradient();
+    delay_ms(2000);
+
 
     /* 1. Включаем тактирование GPIOC */
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; 
@@ -188,7 +398,7 @@ int main(void)
     while (1)
     {
         GPIOC->ODR ^= (1U << 13);  // переключить пин
-        delay(500000);
+        delay_ms(500);
     }
 }
 
