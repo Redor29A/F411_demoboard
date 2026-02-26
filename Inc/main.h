@@ -6,14 +6,14 @@
 extern "C" {
 #endif
 
-#if !defined(STM32F411xE) 
-#define STM32F411xE 
-#endif
-
 #include "stm32f4xx.h"
 
 #ifdef __cplusplus
 }
 #endif
+
+#include "GPIO_lib.h"
+#include "SPI_lib.h"
+#include "ST7796_lib.h"
 
 #endif /* __MAIN_H */

@@ -60,7 +60,7 @@ void delay_us(uint32_t us)
 
     while (us--)
     {
-        n = 4;
+        n = 6;
         while (n--)
             __NOP();
     }
@@ -70,7 +70,7 @@ void delay_ms(uint32_t ms)
 {
     delay_us(ms * 1000);
 }
-
+/*           † ᏒᏆᎵ †                        (Слишком медленно)
 void RCC_config(){ //25 MHz all clocks
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY));
@@ -78,7 +78,37 @@ void RCC_config(){ //25 MHz all clocks
     RCC->CFGR |= RCC_CFGR_SW_HSE;
     while (!(RCC->CFGR & RCC_CFGR_SWS_HSE));
     SystemCoreClockUpdate(); 
-}
+}*/
+
+void RCC_config(){     //Хеллоу дорогоие подпищики сегодня мы будем оверклочить Arm Cortex M4 до 100 Mhz 
+    RCC->CR |= RCC_CR_HSEON; // заводим наше кварцевое двигало
+    while (!(RCC->CR & RCC_CR_HSERDY));  //ждём прогрева до рабочих температур
+
+    RCC->CR &= ~RCC_CR_PLLON;  // нажимаем тормоз чтобы не улететь раньше времени 
+
+    RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSE;  // вырубаем диферециал 
+    RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLP;
+    RCC->PLLCFGR |= (0b00 << RCC_PLLCFGR_PLLP_Pos);  // подключаем турбину 
+    RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLN;
+    RCC->PLLCFGR |= (200U << RCC_PLLCFGR_PLLN_Pos);  // закись озота 
+    RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLM;
+    RCC->PLLCFGR |= (25U << RCC_PLLCFGR_PLLM_Pos);  // пиздатый ручник
+
+    RCC->CR |= RCC_CR_PLLON;  // выжимаем сцепление 
+    while (!(RCC->CR & RCC_CR_PLLRDY)); // ждём зелёный свет
+
+    RCC->CFGR &= ~(RCC_CFGR_PPRE2 | RCC_CFGR_PPRE1 | RCC_CFGR_HPRE | RCC_CFGR_SW);  // врубаем передачу 
+    RCC->CFGR |= (0b000 << RCC_CFGR_PPRE2_Pos);
+    RCC->CFGR |= (0b100 << RCC_CFGR_PPRE1_Pos);
+    RCC->CFGR |= (0b000 << RCC_CFGR_HPRE_Pos);
+
+    FLASH->ACR |= FLASH_ACR_ICEN  | FLASH_ACR_DCEN  | FLASH_ACR_PRFTEN | FLASH_ACR_LATENCY_3WS;  // Штурман! не ссать!
+    // *врум врум врум 
+    RCC->CFGR |= (0b10 << RCC_CFGR_SW_Pos);  // >>>>>>вжжуууууу>>>>>>> полетели 
+    while (!(RCC->CFGR & RCC_CFGR_SWS_PLL));  
+
+    SystemCoreClockUpdate();  // Смотрим на спидометр
+} 
 
 void SPI1_config()
 {
@@ -91,16 +121,16 @@ void SPI1_config()
     SPI1->I2SCFGR = 0; //сброс всех битов
 
     SPI1->CR1 |= SPI_CR1_MSTR; //режим ведущего
-    SPI1->CR1 |= (0b000 << SPI_CR1_BR_Pos); //делитель 4 (25 mhz / 16 = 1,5625 mhz)
+    SPI1->CR1 |= (0b000 << SPI_CR1_BR_Pos); //делитель /2 
     SPI1->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI; //ручное управление NSS
 
     SPI1->CR1 |= SPI_CR1_SPE; //включить SPI
 }
 
 void SPI1_write(uint8_t data){
+    //while (SPI1->SR & SPI_SR_BSY);
     SPI1->DR = data;
-    while (!(SPI1->SR & SPI_SR_TXE));  
-    //while (SPI1->SR & SPI_SR_BSY);  
+    while (!(SPI1->SR & SPI_SR_TXE));     
 }
 
 uint8_t SPI1_read(uint8_t timeout = 10){
@@ -111,7 +141,6 @@ uint8_t SPI1_read(uint8_t timeout = 10){
 
 void display_pins_config(){
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; //тактирование GPIOA
-    __NOP(); __NOP();
      
     //A5 - SCL
     GPIOA->MODER &= ~GPIO_MODER_MODER5;   
@@ -352,30 +381,12 @@ void display_init(){
 
 int main(void)
 {
+    delay_ms(1000);
     RCC_config();
     display_pins_config(); //настраиваем пины для дисплея   
     SPI1_config(); //настраиваем SPI1 для дисплея
     display_init();
-
-    lcd_fill(0xFFFF); // белый
-    delay_ms(1000);
-
-    lcd_fill(0x0000); // чёрный
-    delay_ms(1000);
-
-    lcd_fill(0xF800); // красный
-    delay_ms(1000);
-
-    lcd_fill(0x07E0); // зелёный
-    delay_ms(1000);
-
-    lcd_fill(0x001F); // синий
-    delay_ms(1000);
-
-    lcd_test_gradient();
-    delay_ms(2000);
-
-
+    
     /* 1. Включаем тактирование GPIOC */
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; 
 
@@ -394,9 +405,27 @@ int main(void)
 
     /* 5. Без подтяжек */
     GPIOC->PUPDR &= ~(3U << (13 * 2));
-
+    
     while (1)
-    {
+    {   
+        lcd_fill(0xFFFF); // белый
+        delay_ms(1000);
+
+        lcd_fill(0x0000); // чёрный
+        delay_ms(1000);
+
+        lcd_fill(0xF800); // красный
+        delay_ms(1000);
+
+        lcd_fill(0x07E0); // зелёный
+        delay_ms(1000);
+
+        lcd_fill(0x001F); // синий
+        delay_ms(1000);
+
+        lcd_test_gradient();
+        delay_ms(2000);
+
         GPIOC->ODR ^= (1U << 13);  // переключить пин
         delay_ms(500);
     }

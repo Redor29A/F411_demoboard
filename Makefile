@@ -14,7 +14,10 @@ BUILD_DIR = build
 
 # C++ sources
 CPP_SOURCES = \
-Src/main.cpp
+Src/main.cpp \
+Src/GPIO_lib.cpp \
+Src/SPI_lib.cpp \
+Src/ST7796_lib.cpp 
 
 # C sources (оставляем HAL и прочее)
 C_SOURCES =  \
