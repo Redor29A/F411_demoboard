@@ -151,7 +151,7 @@ void display_pins_config(){
 
     GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL5;   
     GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL5_Pos);   // AF5 = SPI1 SCL
-
+    
     //A6 - SDA-O
     GPIOA->MODER &= ~GPIO_MODER_MODER6;   // 00 = INPUT
 
