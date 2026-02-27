@@ -32,21 +32,25 @@ public:
     static constexpr OType PushPull  = 0;
     static constexpr OType OpenDrain = 1;
 
-    static constexpr Speed Low      = 0;
-    static constexpr Speed Medium   = 1;
-    static constexpr Speed High     = 2;
-    static constexpr Speed VeryHigh = 3;
+    static constexpr Speed LowSpeed      = 0;
+    static constexpr Speed MediumSpeed   = 1;
+    static constexpr Speed HighSpeed     = 2;
+    static constexpr Speed VeryHighSpeed = 3;
 
     GPIO(GPIO_TypeDef* port,
          uint8_t pin,
          Mode mode,
          Pull pull = PullNone,
          OType type = PushPull,
-         Speed speed = High,
+         Speed speed = HighSpeed,
          uint8_t af = 0);
 
     void set();
     void reset();
+    void high(){set();}
+    void low(){reset();}
+    void on(){set();};
+    void off(){reset();}
     void write(bool v);
     void toggle();
     bool read();

@@ -29,11 +29,7 @@ class display
 {
 
 public:
-    display(int8_t DC, int8_t RST=-1, int8_t CS=-1);
-    void init(uint16_t wd, uint16_t ht);
-    void begin() { init(WIDTH, HEIGHT); }
-    void init() { init(WIDTH, HEIGHT); }
-    void setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
+    display(uint16_t width, uint16_t height);
     void pushColor(uint16_t color);
     void fillScreen(uint16_t color=BLACK);
     void clearScreen() { fillScreen(BLACK); }

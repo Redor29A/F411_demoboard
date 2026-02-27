@@ -11,6 +11,10 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#include "SPI_lib.h"
+#include "GPIO_lib.h"
+
 #define ST7769_CMD_NOP 0x00
 #define ST7769_CMD_SWRESET 0x01 //Software Reset
 #define ST7769_CMD_RDDID 0x04 //Read Display ID 
@@ -85,27 +89,37 @@ extern "C" {
 #define ST7769_CMD_CSCON 0xF0 //Command Set Control
 #define ST7769_CMD_SPIRdCtrl 0xFB //SPI Read Control
 
-
-class ST7796 {
+class ST7769 {
     public:
 
-        void displayInit();
-        void writeMulti(uint16_t color, uint16_t num);
-        void copyMulti(uint8_t *img, uint16_t num);
-        void writeCmd(uint8_t c);
-        void writeData(uint8_t d8);
-        void writeData16(uint16_t d16);
+        ST7769(SPI& spi, GPIO& DC, GPIO& CS, GPIO& RST);
+        void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){Column_addres_set(xs, xe); row_addres_set(ys, ye);}
+        void Column_addres_set(uint16_t xs, uint16_t xe){write_cmd(ST7769_CMD_CASET); write_data(xs); write_data(xe);}
+        void row_addres_set(uint16_t ys, uint16_t ye){write_cmd(ST7769_CMD_RASET); write_data(ys); write_data(ye);}
+        void set_inversion(bool inv){if(inv) set_inversion_on(); else set_inversion_off();}
+        void set_inversion_on(){write_cmd(ST7769_CMD_INVON);}
+        void set_inversion_off(){write_cmd(ST7769_CMD_INVOFF);}
+        void sleep_in(){write_cmd(ST7769_CMD_SLPIN);}
+        void sleep_out(){write_cmd(ST7769_CMD_SLPOUT);}
+        void display_on(){write_cmd(ST7769_CMD_DISPON);}
+        void display_off(){write_cmd(ST7769_CMD_DISPOFF);}
+        void partial_mode_on(){write_cmd(ST7769_CMD_PTLON);}
+        void normal_mode_on(){write_cmd(ST7769_CMD_NORON);}
+        void memory_write(){memory_write_start();};
+        void memory_write_start();
+        void memory_write_end();
+        void set_pixel(uint16_t x, uint16_t y, uint16_t color);
 
-        void csLow();
-        void csHigh(); 
-
-        void dcCMD();
-        void dcData();
-
-        void blOn(); 
-        void blOff(); 
+        void write_multi(uint16_t color, uint16_t num);
+        void copy_multi(uint8_t *img, uint16_t num);
+        void write_cmd(uint8_t c);
+        void write_data(uint8_t d8);
+        void write_data16(uint16_t d16);
     private:
-
+        SPI& spi; 
+        GPIO& DC;
+        GPIO& CS;
+        GPIO& RST;
 };
 
 #endif /* __MAIN_H */
