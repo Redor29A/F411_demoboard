@@ -2,7 +2,7 @@
 #include "GPIO_lib.h"
 
 
-GPIO::GPIO(GPIO_TypeDef* port, uint8_t pin, Mode mode, Pull pull, OType type, Speed speed, uint8_t af) 
+GPIOx::GPIOx(GPIO_TypeDef* port, uint8_t pin, Mode mode, Pull pull, OType type, Speed speed, uint8_t af) 
 : port(port), pin(pin), mode(mode)
 {
     port->MODER &= ~(3U << (pin * 2));
@@ -11,7 +11,7 @@ GPIO::GPIO(GPIO_TypeDef* port, uint8_t pin, Mode mode, Pull pull, OType type, Sp
     port->PUPDR &= ~(3U << (pin * 2));
     port->PUPDR |=  (pull << (pin * 2));
 
-    if (mode == Output || mode == Alternate)
+    if (mode == ModeOutput || mode == ModeAlternate)
     {
         port->OTYPER &= ~(1U << pin);
         port->OTYPER |=  (type << pin);
@@ -20,7 +20,7 @@ GPIO::GPIO(GPIO_TypeDef* port, uint8_t pin, Mode mode, Pull pull, OType type, Sp
         port->OSPEEDR |=  (speed << (pin * 2));
     }
 
-    if (mode == Alternate)
+    if (mode == ModeAlternate)
     {
         uint32_t idx = pin >> 3;
         uint32_t pos = (pin & 7) * 4;
@@ -31,25 +31,25 @@ GPIO::GPIO(GPIO_TypeDef* port, uint8_t pin, Mode mode, Pull pull, OType type, Sp
 }
 
 
-void GPIO::set()
+void GPIOx::set()
 {
-    if (mode != Output) return;
+    if (mode != ModeOutput) return;
     port->BSRR = (1U << pin);
 }
 
-void GPIO::reset()
+void GPIOx::reset()
 {
-    if (mode != Output) return;
+    if (mode != ModeOutput) return;
     port->BSRR = (1U << (pin + 16));
 }
 
-void GPIO::write(bool v)
+void GPIOx::write(bool v)
 {
     if (v) set();
     else   reset();
 }
 
-bool GPIO::read()
+bool GPIOx::read()
 {
     return (port->IDR >> pin) & 1U;
 }

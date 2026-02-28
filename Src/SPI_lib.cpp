@@ -1,60 +1,84 @@
 #include "SPI_lib.h"
 
-
-void SPI::displayInit()
+SPIx::SPIx(SPI_TypeDef* spi,
+           Mode mode,
+           Direction dir,
+           DataSize size,
+           ClockPol cpol,
+           ClockPhase cpha,
+           NSS nss,
+           BaudRate br,
+           FirstBit first) : spi(spi)
 {
 
+    spi->CR1 = 0;
+    spi->CR2 = 0;
+
+    if (mode == ModeMaster) spi->CR1 |= SPI_CR1_MSTR;
+
+    // Direction
+    if (dir == DirectionRxOnly) spi->CR1 |= SPI_CR1_RXONLY;
+    else if (dir == DirectionOneLineRx) spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
+    else if (dir == DirectionOneLineTx) spi->CR1 |= SPI_CR1_BIDIMODE;
+
+    // Data size
+    if (size == DataSize16) spi->CR1 |= SPI_CR1_DFF;
+
+    // Clock
+    if (cpol == ClockPol_High)  spi->CR1 |= SPI_CR1_CPOL;
+    if (cpha == ClockPhase_2Edge) spi->CR1 |= SPI_CR1_CPHA;
+
+    // NSS
+    if (nss == Software_NSS)
+        spi->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI;
+    else
+        spi->CR2 |= SPI_CR2_SSOE;
+
+    // Baud rate
+    spi->CR1 |= (br << SPI_CR1_BR_Pos);
+
+    // First bit
+    if (first == FirstBit_LSB) spi->CR1 |= SPI_CR1_LSBFIRST;
+
+    // Enable SPI
+    spi->CR1 |= SPI_CR1_SPE;
 }
 
-void SPI::writeSPI(uint8_t)
+uint8_t SPIx::transfer(uint8_t data)
 {
-
+    while (!(spi->SR & SPI_SR_TXE));
+    spi->DR = data;
+    while (!(spi->SR & SPI_SR_RXNE));
+    return *(__IO uint8_t*)&spi->DR;
 }
 
-void SPI::writeMulti(uint16_t color, uint16_t num)
+void SPIx::write(uint8_t data)
 {
-
+    while (!(spi->SR & SPI_SR_TXE));
+    spi->DR = data;
 }
 
-void SPI::copyMulti(uint8_t *img, uint16_t num)
+uint8_t SPIx::read()
 {
-
+    return transfer(0xFF);
 }
 
-void SPI::writeCmd(uint8_t c)
+void SPIx::write_buf(const uint8_t* buf, uint32_t len)
 {
-
+    while (len--) write(*buf++);
 }
 
-void SPI::writeData(uint8_t d8)
+void SPIx::read_buf(uint8_t* buf, uint32_t len)
 {
-
+    while (len--) *buf++ = read();
 }
 
-void SPI::writeData16(uint16_t d16)
+void SPIx::enable()
 {
-
+    spi->CR1 |= SPI_CR1_SPE;
 }
 
-void SPI::commonInit(const uint8_t *cmdList)
+void SPIx::disable()
 {
-
+    spi->CR1 &= ~SPI_CR1_SPE;
 }
-
-void SPI::delay()
-{
-
-}
-
-void SPI::csLow()
-{
-
-}
-
-void SPI::csHigh() { GPIOA->BSRR = GPIO_BSRR_BR4; }
-void SPI::dcCMD() { }
-void SPI::dcData() { }
-
-void SPI::blOn() { }
-
-void SPI::blOff() { }

@@ -12,45 +12,46 @@ extern "C" {
 }
 #endif
 
-class GPIO
+class GPIOx
 {
 public:
+
     using Mode  = uint8_t;
     using Pull  = uint8_t;
     using OType = uint8_t;
     using Speed = uint8_t;
 
-    static constexpr Mode  Input     = 0;
-    static constexpr Mode  Output    = 1;
-    static constexpr Mode  Alternate = 2;
-    static constexpr Mode  Analog    = 3;
+    static constexpr uint8_t  ModeInput     = 0;
+    static constexpr uint8_t  ModeOutput    = 1;
+    static constexpr uint8_t  ModeAlternate = 2;
+    static constexpr uint8_t  ModeAnalog    = 3;
 
-    static constexpr Pull  PullNone = 0;
-    static constexpr Pull  PullUp   = 1;
-    static constexpr Pull  PullDown = 2;
+    static constexpr uint8_t  PullNone = 0;
+    static constexpr uint8_t  PullUp   = 1;
+    static constexpr uint8_t  PullDown = 2;
 
-    static constexpr OType PushPull  = 0;
-    static constexpr OType OpenDrain = 1;
+    static constexpr uint8_t OTypePushPull  = 0;
+    static constexpr uint8_t OTypeOpenDrain = 1;
 
-    static constexpr Speed LowSpeed      = 0;
-    static constexpr Speed MediumSpeed   = 1;
-    static constexpr Speed HighSpeed     = 2;
-    static constexpr Speed VeryHighSpeed = 3;
+    static constexpr uint8_t SpeedLow     = 0;
+    static constexpr uint8_t SpeedMedium  = 1;
+    static constexpr uint8_t SpeedHigh    = 2;
+    static constexpr uint8_t SpeedVeryHigh= 3;
 
-    GPIO(GPIO_TypeDef* port,
+    GPIOx(GPIO_TypeDef* port,
          uint8_t pin,
          Mode mode,
          Pull pull = PullNone,
-         OType type = PushPull,
-         Speed speed = HighSpeed,
+         OType type = OTypePushPull,
+         Speed speed = SpeedHigh,
          uint8_t af = 0);
 
     void set();
     void reset();
-    void high(){set();}
-    void low(){reset();}
-    void on(){set();};
-    void off(){reset();}
+    inline void high(){set();}
+    inline void low(){reset();}
+    inline void on(){set();};
+    inline void off(){reset();}
     void write(bool v);
     void toggle();
     bool read();

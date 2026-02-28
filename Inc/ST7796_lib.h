@@ -92,8 +92,9 @@ extern "C" {
 class ST7769 {
     public:
 
-        ST7769(SPI& spi, GPIO& DC, GPIO& CS, GPIO& RST);
-        void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){Column_addres_set(xs, xe); row_addres_set(ys, ye);}
+        ST7769(SPIx& spi, GPIOx& DC, GPIOx& CS, GPIOx& RST);
+        //void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){Column_addres_set(xs, xe); row_addres_set(ys, ye);}
+        void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
         void Column_addres_set(uint16_t xs, uint16_t xe){write_cmd(ST7769_CMD_CASET); write_data(xs); write_data(xe);}
         void row_addres_set(uint16_t ys, uint16_t ye){write_cmd(ST7769_CMD_RASET); write_data(ys); write_data(ye);}
         void set_inversion(bool inv){if(inv) set_inversion_on(); else set_inversion_off();}
@@ -109,17 +110,17 @@ class ST7769 {
         void memory_write_start();
         void memory_write_end();
         void set_pixel(uint16_t x, uint16_t y, uint16_t color);
-
+        void fill(uint16_t color);
         void write_multi(uint16_t color, uint16_t num);
         void copy_multi(uint8_t *img, uint16_t num);
         void write_cmd(uint8_t c);
         void write_data(uint8_t d8);
         void write_data16(uint16_t d16);
     private:
-        SPI& spi; 
-        GPIO& DC;
-        GPIO& CS;
-        GPIO& RST;
+        SPIx& spi; 
+        GPIOx& DC;
+        GPIOx& CS;
+        GPIOx& RST;
 };
 
 #endif /* __MAIN_H */

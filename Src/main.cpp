@@ -212,11 +212,11 @@ void display_pins_config(){
     GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL4_Pos);   // AF5 = SPI1  NSS
 }
 
-void display_reset(){
-    GPIOA->BSRR = GPIO_BSRR_BR3;  // LOW
+void display_reset(GPIOx& rst){
+    rst.reset();  // LOW
     delay_ms(20);
 
-    GPIOA->BSRR = GPIO_BSRR_BS3;  // HIGH
+    rst.set();  // HIGH
     delay_ms(120);
 }
 
@@ -358,7 +358,7 @@ uint16_t lcd_read_pixel(uint16_t x, uint16_t y)
     return color;
 }
 
-void display_init(){
+/*void display_init(){
     BL_ON();
 
     display_reset();
@@ -377,16 +377,39 @@ void display_init(){
     lcd_cmd(0x29);        // Display ON
     delay_ms(20);
 
-}
+}*/
 
 int main(void)
 {
-    delay_ms(1000);
     RCC_config();
-    display_pins_config(); //настраиваем пины для дисплея   
-    SPI1_config(); //настраиваем SPI1 для дисплея
-    display_init();
-    
+
+    //display_pins_config(); //настраиваем пины для дисплея 
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; //тактирование GPIOA
+    GPIOx SCL(GPIOA, 5, GPIOx::ModeAlternate, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh, 5);
+    GPIOx SDA(GPIOA, 7, GPIOx::ModeAlternate, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh, 5);
+    GPIOx SDA_O(GPIOA, 6, GPIOx::ModeInput);
+    GPIOx DC(GPIOA, 2, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    GPIOx CS(GPIOA, 2, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    GPIOx BL(GPIOA, 1, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    GPIOx RST(GPIOA, 3, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    //SPI1_config(); //настраиваем SPI1 для дисплея
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
+    SPIx spi(SPI1, SPIx::ModeMaster, SPIx::DirectionFullDuplex, SPIx::DataSize8,
+             SPIx::ClockPol_Low, SPIx::ClockPhase_1Edge, SPIx::Software_NSS, SPIx::BaudRate_Div2, SPIx::FirstBit_MSB);
+
+    //display_init();
+    BL.set();
+    ST7769 st7769(spi, DC, CS, RST);
+    display_reset(RST);
+    st7769.sleep_out();
+    st7769.write_cmd(ST7769_CMD_MADCTL);
+    st7769.write_data(0x48); // поворот + RGB
+    st7769.write_cmd(ST7769_CMD_COLMOD);
+    st7769.write_data(0x55); // Pixel format 16-bit
+    st7769.set_inversion_on();
+    st7769.display_on();
+    delay_ms(20);
+
     /* 1. Включаем тактирование GPIOC */
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; 
 
@@ -408,23 +431,20 @@ int main(void)
     
     while (1)
     {   
-        lcd_fill(0xFFFF); // белый
+        st7769.fill(0xffff);
         delay_ms(1000);
 
-        lcd_fill(0x0000); // чёрный
+        st7769.fill(0x0000);
         delay_ms(1000);
 
-        lcd_fill(0xF800); // красный
+        st7769.fill(0xF800);
         delay_ms(1000);
 
-        lcd_fill(0x07E0); // зелёный
+        st7769.fill(0x07E0);
         delay_ms(1000);
 
-        lcd_fill(0x001F); // синий
+        st7769.fill(0x001F);
         delay_ms(1000);
-
-        lcd_test_gradient();
-        delay_ms(2000);
 
         GPIOC->ODR ^= (1U << 13);  // переключить пин
         delay_ms(500);
