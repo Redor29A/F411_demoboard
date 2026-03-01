@@ -40,7 +40,7 @@ void GPIOx::set()
 void GPIOx::reset()
 {
     if (mode != ModeOutput) return;
-    port->BSRR = (1U << (pin + 16));
+    port->BSRR = (1U << (pin + 16U));
 }
 
 void GPIOx::write(bool v)
@@ -52,4 +52,10 @@ void GPIOx::write(bool v)
 bool GPIOx::read()
 {
     return (port->IDR >> pin) & 1U;
+}
+
+void GPIOx::toggle()
+{
+    if (mode != ModeOutput) return; 
+    port->ODR ^= (1U << pin);
 }

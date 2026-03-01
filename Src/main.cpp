@@ -45,15 +45,6 @@
 
 #include "main.h"
 
-#define CS_LOW()    (GPIOA->BSRR = GPIO_BSRR_BR4)
-#define CS_HIGH()   (GPIOA->BSRR = GPIO_BSRR_BS4)
-
-#define DC_CMD()    (GPIOA->BSRR = GPIO_BSRR_BR2)
-#define DC_DATA()   (GPIOA->BSRR = GPIO_BSRR_BS2)
-
-#define BL_ON()     (GPIOA->BSRR = GPIO_BSRR_BS1)
-#define BL_OFF()    (GPIOA->BSRR = GPIO_BSRR_BR1)
-
 void delay_us(uint32_t us)
 {
     volatile uint32_t n;
@@ -70,6 +61,7 @@ void delay_ms(uint32_t ms)
 {
     delay_us(ms * 1000);
 }
+
 /*           † ᏒᏆᎵ †                        (Слишком медленно)
 void RCC_config(){ //25 MHz all clocks
     RCC->CR |= RCC_CR_HSEON;
@@ -110,227 +102,19 @@ void RCC_config(){     //Хеллоу дорогоие подпищики сег
     SystemCoreClockUpdate();  // Смотрим на спидометр
 } 
 
-void SPI1_config()
-{
-    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
-    __NOP(); __NOP();
-    //NSS output enabled (SSM = 0, SSOE = 1) CPOL = 0 CPHA = 0 LSBFIRST = 0 DFF = 0
-    //FRF   MSTR and SPE bits must be set 
-    SPI1->CR1 = 0; //сброс всех битов
-    SPI1->CR2 = 0; //сброс всех битов
-    SPI1->I2SCFGR = 0; //сброс всех битов
 
-    SPI1->CR1 |= SPI_CR1_MSTR; //режим ведущего
-    SPI1->CR1 |= (0b000 << SPI_CR1_BR_Pos); //делитель /2 
-    SPI1->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI; //ручное управление NSS
-
-    SPI1->CR1 |= SPI_CR1_SPE; //включить SPI
-}
-
-void SPI1_write(uint8_t data){
-    //while (SPI1->SR & SPI_SR_BSY);
-    SPI1->DR = data;
-    while (!(SPI1->SR & SPI_SR_TXE));     
-}
-
-uint8_t SPI1_read(uint8_t timeout = 10){
-    while (!(SPI1->SR & SPI_SR_RXNE)); 
-    uint8_t RX_data = SPI1->DR;
-    return RX_data;
-}
-
-void display_pins_config(){
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; //тактирование GPIOA
-     
-    //A5 - SCL
-    GPIOA->MODER &= ~GPIO_MODER_MODER5;   
-    GPIOA->MODER |=  (2U << GPIO_MODER_MODER5_Pos);   // 10 = AF
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED5;   
-    GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED5_Pos);   // высокая скорость
-
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL5;   
-    GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL5_Pos);   // AF5 = SPI1 SCL
-    
-    //A6 - SDA-O
-    GPIOA->MODER &= ~GPIO_MODER_MODER6;   // 00 = INPUT
-
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD6;   // без подтяжек
-
-    //A7 - SDA
-    GPIOA->MODER &= ~GPIO_MODER_MODER7;   
-    GPIOA->MODER |=  (2U << GPIO_MODER_MODER7_Pos);   // 10 = AF
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED7;   
-    GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED7_Pos);   // высокая скорость
-
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL7;   
-    GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL7_Pos);   // AF5 = SPI1 SDA
-
-    //A1 - BL
-    GPIOA->MODER &= ~GPIO_MODER_MODER1;   
-    GPIOA->MODER |=  (1U << GPIO_MODER_MODER1_Pos);   // 01 = output
-
-    GPIOA->OTYPER &= ~GPIO_OTYPER_OT1;        // push-pull 
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED1;
-    GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED1_Pos);   // высокая скорость
-
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD1;   // без подтяжек     
-
-    //A2 - DC
-    GPIOA->MODER &= ~GPIO_MODER_MODER2;   
-    GPIOA->MODER |=  (1U << GPIO_MODER_MODER2_Pos);   // 01 = output
-
-    GPIOA->OTYPER &= ~GPIO_OTYPER_OT2;        // push-pull
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED2;
-    GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED2_Pos);   // высокая скорость
-
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD2;   // без подтяжек 
-
-    //A3 - RST
-    GPIOA->MODER &= ~GPIO_MODER_MODER3;   
-    GPIOA->MODER |=  (1U << GPIO_MODER_MODER3_Pos);   // 01 = output 
-
-    GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;       // push-pull
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED3;
-    GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED3_Pos);   // высокая скорость
-
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD3;   
-    GPIOA->PUPDR |= (1U << GPIO_PUPDR_PUPD3_Pos);   // 01 = pull-up
-
-    //A4 - CS
-    GPIOA->MODER &= ~GPIO_MODER_MODER4;   
-    GPIOA->MODER |=  (2U << GPIO_MODER_MODER4_Pos);   // 10 = AF
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED4;  
-    GPIOA->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED4_Pos);   // высокая скорость
-
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL4; 
-    GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL4_Pos);   // AF5 = SPI1  NSS
-}
 
 void display_reset(GPIOx& rst){
-    rst.reset();  // LOW
+    rst.low();
     delay_ms(20);
 
-    rst.set();  // HIGH
+    rst.high();
     delay_ms(120);
 }
 
-void display_set_DC(bool DC){
-    if(DC){
-        GPIOA->ODR |= GPIO_ODR_OD2; //data
-    }
-    else{
-        GPIOA->ODR &= ~GPIO_ODR_OD2;//command
-    }
-}
 
-void display_set_BL(bool BL){
-    if(BL){
-        GPIOA->ODR |= GPIO_ODR_OD1;
-    }
-    else{
-        GPIOA->ODR &= ~GPIO_ODR_OD1;
-    }
-}
 
-void lcd_cmd(uint8_t cmd)
-{
-    DC_CMD();
-    CS_LOW();
-
-    SPI1_write(cmd);
-
-    CS_HIGH();
-}
-
-void lcd_data(uint8_t data)
-{
-    DC_DATA();
-    CS_LOW();
-
-    SPI1_write(data);
-
-    CS_HIGH();
-}
-
-void lcd_set_addr(uint16_t x0, uint16_t y0,
-                  uint16_t x1, uint16_t y1)
-{
-    lcd_cmd(0x2A);  // Column
-    lcd_data(x0 >> 8);
-    lcd_data(x0);
-    lcd_data(x1 >> 8);
-    lcd_data(x1);
-
-    lcd_cmd(0x2B);  // Row
-    lcd_data(y0 >> 8);
-    lcd_data(y0);
-    lcd_data(y1 >> 8);
-    lcd_data(y1);
-
-    lcd_cmd(0x2C);  // Memory Write
-}
-
-void lcd_set_pixel(uint16_t x, uint16_t y, uint16_t color)
-{
-    lcd_set_addr(x, y, x, y);
-
-    DC_DATA();
-    CS_LOW();
-
-    SPI1_write(color >> 8);
-    SPI1_write(color);
-
-    CS_HIGH();
-}
-
-void lcd_fill(uint16_t color)
-{
-    lcd_set_addr(0, 0, 319, 479);
-
-    DC_DATA();
-    CS_LOW();
-
-    for (uint32_t i = 0; i < 320UL * 480; i++)
-    {
-        SPI1_write(color >> 8);
-        SPI1_write(color);
-    }
-
-    CS_HIGH();
-}
-
-void lcd_test_gradient()
-{
-    lcd_set_addr(0, 0, 319, 479);
-
-    DC_DATA();
-    CS_LOW();
-
-    for (uint16_t y = 0; y < 480; y++)
-    {
-        for (uint16_t x = 0; x < 320; x++)
-        {
-            uint16_t r = (x * 31) / 319;
-            uint16_t g = (y * 63) / 479;
-            uint16_t b = ((x + y) * 31) / 798;
-
-            uint16_t color = (r << 11) | (g << 5) | b;
-
-            SPI1_write(color >> 8);
-            SPI1_write(color);
-        }
-    }
-
-    CS_HIGH();
-}
-
-uint16_t lcd_read_pixel(uint16_t x, uint16_t y)
+/*uint16_t lcd_read_pixel(uint16_t x, uint16_t y)
 {
     uint16_t color;
 
@@ -356,97 +140,81 @@ uint16_t lcd_read_pixel(uint16_t x, uint16_t y)
             (b >> 3);
 
     return color;
-}
-
-/*void display_init(){
-    BL_ON();
-
-    display_reset();
-
-    lcd_cmd(0x11);        // Sleep Out
-    delay_ms(120);
-
-    lcd_cmd(0x36);        // MADCTL
-    lcd_data(0x48);       // поворот + RGB
-
-    lcd_cmd(0x3A);        // Pixel format
-    lcd_data(0x55);       // 16-bit
-
-    lcd_cmd(0x21);        // Inversion ON (часто нужно)
-
-    lcd_cmd(0x29);        // Display ON
-    delay_ms(20);
-
 }*/
+
+void fill(ST7796& st7796, uint16_t color){
+    st7796.set_memory_area(0, 0, 319, 479);
+
+    st7796.memory_write_start();
+
+    for (uint32_t i = 0; i < 320UL * 480; i++)
+    {
+        st7796.memory_write(color);
+    }
+
+    st7796.memory_write_end();
+}
 
 int main(void)
 {
     RCC_config();
 
-    //display_pins_config(); //настраиваем пины для дисплея 
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; //тактирование GPIOA
-    GPIOx SCL(GPIOA, 5, GPIOx::ModeAlternate, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh, 5);
-    GPIOx SDA(GPIOA, 7, GPIOx::ModeAlternate, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh, 5);
+    GPIOx SCL(GPIOA, 5, GPIOx::ModeAlternate, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh, 5);
+    GPIOx SDA(GPIOA, 7, GPIOx::ModeAlternate, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh, 5);
     GPIOx SDA_O(GPIOA, 6, GPIOx::ModeInput);
-    GPIOx DC(GPIOA, 2, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
-    GPIOx CS(GPIOA, 2, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
-    GPIOx BL(GPIOA, 1, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
-    GPIOx RST(GPIOA, 3, GPIOx::ModeOutput, GPIOx::PullNone, GPIOx::OTypePushPull, GPIOx::SpeedHigh);
-    //SPI1_config(); //настраиваем SPI1 для дисплея
-    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
-    SPIx spi(SPI1, SPIx::ModeMaster, SPIx::DirectionFullDuplex, SPIx::DataSize8,
-             SPIx::ClockPol_Low, SPIx::ClockPhase_1Edge, SPIx::Software_NSS, SPIx::BaudRate_Div2, SPIx::FirstBit_MSB);
+    GPIOx DC(GPIOA, 2, GPIOx::ModeOutput, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    GPIOx CS(GPIOA, 4, GPIOx::ModeOutput, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    GPIOx BL(GPIOA, 1, GPIOx::ModeOutput, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh);
+    GPIOx RST(GPIOA, 3, GPIOx::ModeOutput, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh);
 
-    //display_init();
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
+    SPIx spi(SPI1, SPIx::ModeMaster, SPIx::DirectionFullDuplex,
+             SPIx::DataSize8, SPIx::ClockPol_Low, SPIx::ClockPhase_1Edge,
+             SPIx::Software_NSS, SPIx::BaudRate_Div2, SPIx::FirstBit_MSB);
+
     BL.set();
-    ST7769 st7769(spi, DC, CS, RST);
+    ST7796 st7796(spi, DC, CS, RST);
     display_reset(RST);
-    st7769.sleep_out();
-    st7769.write_cmd(ST7769_CMD_MADCTL);
-    st7769.write_data(0x48); // поворот + RGB
-    st7769.write_cmd(ST7769_CMD_COLMOD);
-    st7769.write_data(0x55); // Pixel format 16-bit
-    st7769.set_inversion_on();
-    st7769.display_on();
+    st7796.sleep_out();
+    delay_ms(120);
+    st7796.write_cmd(ST7796_CMD_MADCTL);
+    st7796.write_data(0x48); // поворот + RGB
+    st7796.write_cmd(ST7796_CMD_COLMOD);
+    st7796.write_data(0x55); // Pixel format 16-bit
+    st7796.set_inversion_on();
+    st7796.display_on();
     delay_ms(20);
 
-    /* 1. Включаем тактирование GPIOC */
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; 
 
-    /* Небольшая пауза после включения тактирования */
-    __NOP(); __NOP();
-
-    /* 2. PC13 -> режим OUTPUT */
-    GPIOC->MODER &= ~(3U << (13 * 2));   
-    GPIOC->MODER |=  (1U << (13 * 2));   // 01 = output
-    
-    /* 3. Тип выхода push-pull */
-    GPIOC->OTYPER &= ~(1U << 13);
-
-    /* 4. Скорость (не критично) */
-    GPIOC->OSPEEDR |= (3U << (13 * 2));
-
-    /* 5. Без подтяжек */
-    GPIOC->PUPDR &= ~(3U << (13 * 2));
+    GPIOx LED(GPIOC, 13, GPIOx::ModeOutput, GPIOx::PullNone,
+             GPIOx::OTypePushPull, GPIOx::SpeedHigh);
     
     while (1)
     {   
-        st7769.fill(0xffff);
+        fill(st7796, 0xffff);
         delay_ms(1000);
 
-        st7769.fill(0x0000);
+        fill(st7796, 0x0000);
         delay_ms(1000);
 
-        st7769.fill(0xF800);
+        fill(st7796, 0xF800);
         delay_ms(1000);
 
-        st7769.fill(0x07E0);
+        fill(st7796, 0x07E0);
         delay_ms(1000);
 
-        st7769.fill(0x001F);
+        fill(st7796, 0x001F);
         delay_ms(1000);
 
-        GPIOC->ODR ^= (1U << 13);  // переключить пин
+        LED.toggle();  // переключить пин
         delay_ms(500);
     }
 }

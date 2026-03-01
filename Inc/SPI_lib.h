@@ -67,6 +67,8 @@ public:
 
     uint8_t transfer(uint8_t data);
     void write(uint8_t data);
+    void write_wait_TXE(uint8_t data);
+    void write_wait_BSY(uint8_t data);
     inline void send(uint8_t data){write(data);}
     uint8_t read();
     inline uint8_t get(){return read();}
@@ -78,6 +80,8 @@ public:
     inline void on(){enable();}
     void disable();
     inline void off(){disable();}
+
+    uint8_t return_SR();
 
 private:
     SPI_TypeDef* spi;

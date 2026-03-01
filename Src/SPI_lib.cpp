@@ -58,6 +58,23 @@ void SPIx::write(uint8_t data)
     spi->DR = data;
 }
 
+void SPIx::write_wait_TXE(uint8_t data)
+{
+    spi->DR = data;
+    while (!(spi->SR & SPI_SR_TXE));
+}
+
+void SPIx::write_wait_BSY(uint8_t data)
+{
+    spi->DR = data;
+    while (!(spi->SR & SPI_SR_BSY));
+}
+
+uint8_t SPIx::return_SR()
+{
+    return spi->SR;
+}
+
 uint8_t SPIx::read()
 {
     return transfer(0xFF);

@@ -128,5 +128,8 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 $(BUILD_DIR):
 	mkdir -p $@
 
+flash:
+	st-flash write $(BUILD_DIR)/$(TARGET).bin 0x08000000
+
 clean:
 	rm -rf $(BUILD_DIR)
