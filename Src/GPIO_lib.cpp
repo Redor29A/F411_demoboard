@@ -3,8 +3,13 @@
 
 
 GPIOx::GPIOx(GPIO_TypeDef* port, uint8_t pin, Mode mode, Pull pull, OType type, Speed speed, uint8_t af) 
-: port(port), pin(pin), mode(mode)
+: port(port), pin(pin), mode(mode), pull(pull), type(type), speed(speed), af(af)
 {
+   
+}
+
+void GPIOx::init(){
+
     port->MODER &= ~(3U << (pin * 2));
     port->MODER |=  (mode << (pin * 2));
 

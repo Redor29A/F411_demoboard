@@ -23,10 +23,13 @@ Src/ST7796_lib.cpp
 C_SOURCES =  \
 Src/system_stm32f4xx.c \
 Src/sysmem.c \
-Src/syscalls.c
+Src/syscalls.c 
 
-ASM_SOURCES = startup_stm32f411xe.s
+C_SOURCES += $(shell find lvgl/src -name "*.c")
+C_SOURCES += $(shell find lvgl/demos -type f -name '*.c')
 
+
+ASM_SOURCES = startup_stm32f411xe.s 
 #######################################
 # toolchain
 #######################################
@@ -62,7 +65,11 @@ C_DEFS = -DSTM32F411xE
 C_INCLUDES = \
 -IInc \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
--IDrivers/CMSIS/Include
+-IDrivers/CMSIS/Include \
+-Ilvgl \
+-Ilvgl/src \
+-Ilvgl/demos \
+-Ilvgl/demos/widgets \
 
 #######################################
 # flags

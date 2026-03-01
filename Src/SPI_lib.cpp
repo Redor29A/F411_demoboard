@@ -8,9 +8,14 @@ SPIx::SPIx(SPI_TypeDef* spi,
            ClockPhase cpha,
            NSS nss,
            BaudRate br,
-           FirstBit first) : spi(spi)
+           FirstBit first) 
+           : spi(spi), mode(mode), dir(dir), size(size), cpol(cpol), cpha(cpha), nss(nss), br(br), first(first)
 {
 
+}
+
+void SPIx::init()
+{
     spi->CR1 = 0;
     spi->CR2 = 0;
 

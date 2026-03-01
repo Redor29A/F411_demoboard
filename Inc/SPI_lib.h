@@ -64,7 +64,8 @@ public:
          NSS nss = Software_NSS,
          BaudRate br = BaudRate_Div8,
          FirstBit first = FirstBit_MSB);
-
+    
+    void init();
     uint8_t transfer(uint8_t data);
     void write(uint8_t data);
     void write_wait_TXE(uint8_t data);
@@ -85,6 +86,14 @@ public:
 
 private:
     SPI_TypeDef* spi;
+    Mode mode;
+    Direction dir;
+    DataSize size;
+    ClockPol cpol;
+    ClockPhase cpha;
+    NSS nss;
+    BaudRate br;
+    FirstBit first;
 };
 
 #endif

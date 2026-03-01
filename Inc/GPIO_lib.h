@@ -45,7 +45,8 @@ public:
          OType type = OTypePushPull,
          Speed speed = SpeedHigh,
          uint8_t af = 0);
-
+    
+    void init();
     void set();
     void reset();
     inline void high(){set();}
@@ -60,7 +61,10 @@ private:
     GPIO_TypeDef* port;
     uint8_t pin;
     Mode mode;
-
+    Pull pull;
+    OType type;
+    Speed speed;
+    uint8_t af;
 };
 
 

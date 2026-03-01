@@ -1,6 +1,10 @@
 #include "ST7796_lib.h"
 
 ST7796::ST7796(SPIx& spi, GPIOx& DC, GPIOx& CS, GPIOx& RST): spi(spi), DC(DC), CS(CS), RST(RST){
+
+}
+
+void ST7796::init(){
     //CS.high(); 
     RST.high();
 }
