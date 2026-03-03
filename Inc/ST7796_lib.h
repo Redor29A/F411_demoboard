@@ -93,7 +93,6 @@ class ST7796 {
     public:
 
         ST7796(SPIx& spi, GPIOx& DC, GPIOx& CS, GPIOx& RST);
-        void init();
         //void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){column_addres_set(xs, xe); row_addres_set(ys, ye);}
         void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
         //void column_addres_set(uint16_t xs, uint16_t xe){write_cmd(ST7796_CMD_CASET); write_data16(xs); write_data16(xe);}

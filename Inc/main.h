@@ -15,7 +15,5 @@ extern "C" {
 #include "GPIO_lib.h"
 #include "SPI_lib.h"
 #include "ST7796_lib.h"
-#include "lvgl.h"
-#include "lv_demo_widgets.h"
 
 #endif /* __MAIN_H */

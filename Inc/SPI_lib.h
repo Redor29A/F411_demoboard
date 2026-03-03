@@ -65,7 +65,6 @@ public:
          BaudRate br = BaudRate_Div8,
          FirstBit first = FirstBit_MSB);
     
-    void init();
     uint8_t transfer(uint8_t data);
     void write(uint8_t data);
     void write_wait_TXE(uint8_t data);

@@ -46,7 +46,6 @@ public:
          Speed speed = SpeedHigh,
          uint8_t af = 0);
     
-    void init();
     void set();
     void reset();
     inline void high(){set();}

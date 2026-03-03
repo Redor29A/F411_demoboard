@@ -11,11 +11,6 @@ SPIx::SPIx(SPI_TypeDef* spi,
            FirstBit first) 
            : spi(spi), mode(mode), dir(dir), size(size), cpol(cpol), cpha(cpha), nss(nss), br(br), first(first)
 {
-
-}
-
-void SPIx::init()
-{
     spi->CR1 = 0;
     spi->CR2 = 0;
 
@@ -48,6 +43,7 @@ void SPIx::init()
     // Enable SPI
     spi->CR1 |= SPI_CR1_SPE;
 }
+
 
 uint8_t SPIx::transfer(uint8_t data)
 {
