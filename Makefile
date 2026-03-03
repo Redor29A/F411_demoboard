@@ -17,16 +17,15 @@ CPP_SOURCES = \
 Src/main.cpp \
 Src/GPIO_lib.cpp \
 Src/SPI_lib.cpp \
-Src/ST7796_lib.cpp 
+Src/ST7796_lib.cpp \
+Stc/display_lib.cpp 
 
-# C sources (оставляем HAL и прочее)
+# C sources 
 C_SOURCES =  \
 Src/system_stm32f4xx.c \
 Src/sysmem.c \
 Src/syscalls.c 
 
-C_SOURCES += $(shell find lvgl/src -name "*.c")
-C_SOURCES += $(shell find lvgl/demos -type f -name '*.c')
 
 
 ASM_SOURCES = startup_stm32f411xe.s 

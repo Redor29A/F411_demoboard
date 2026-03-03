@@ -140,36 +140,6 @@ void display_reset(GPIOx& rst){
     delay_ms(120);
 }
 
-
-
-/*uint16_t lcd_read_pixel(uint16_t x, uint16_t y)
-{
-    uint16_t color;
-
-    lcd_set_addr(x, y, x, y);
-
-    lcd_cmd(0x2E);   // Memory Read
-
-    DC_DATA();
-    CS_LOW();
-
-    SPI1_write(0x00);      // dummy
-    SPI1_read();
-
-    uint8_t r = SPI1_read();
-    uint8_t g = SPI1_read();
-    uint8_t b = SPI1_read();
-
-    CS_HIGH();
-
-    // преобразуем RGB888 → RGB565
-    color = ((r & 0xF8) << 8) |
-            ((g & 0xFC) << 3) |
-            (b >> 3);
-
-    return color;
-}*/
-
 void fill(ST7796 st7796, uint16_t color){
     st7796.set_memory_area(0, 0, 319, 479);
 
@@ -207,22 +177,10 @@ int main(void)
                 SPIx::DataSize8, SPIx::ClockPol_Low, SPIx::ClockPhase_1Edge,
                 SPIx::Software_NSS, SPIx::BaudRate_Div2, SPIx::FirstBit_MSB);
         
-    
-    SDA.init();
-    SDA_O.init();
-    SCL.init();
-    RST.init();
-    DC.init();
-    CS.init();
-    BL.init();
-    RST.init();
 
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
     ST7796 st7796(spi, DC, CS, RST);
 
-    spi.init();
-
-    st7796.init();
     BL.set();
     display_reset(RST);
     st7796.sleep_out();
@@ -236,6 +194,7 @@ int main(void)
     delay_ms(20);
 
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; 
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
     GPIOx BTN_UP (GPIOB, 6, GPIOx::ModeInput, GPIOx::PullUp);
     GPIOx BTN_DWN(GPIOB, 5, GPIOx::ModeInput, GPIOx::PullUp);
     GPIOx BTN_LFT(GPIOC, 14, GPIOx::ModeInput, GPIOx::PullUp);
@@ -243,20 +202,11 @@ int main(void)
     GPIOx BTN_MID(GPIOB, 9, GPIOx::ModeInput, GPIOx::PullUp);
     GPIOx BTN_SET(GPIOB, 8, GPIOx::ModeInput, GPIOx::PullUp);
     GPIOx BTN_RST(GPIOB, 7, GPIOx::ModeInput, GPIOx::PullUp);
-
     GPIOx LED(GPIOC, 13, GPIOx::ModeOutput, GPIOx::PullNone,
              GPIOx::OTypePushPull, GPIOx::SpeedHigh);
-    LED.init();
  
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
-    BTN_UP.init();
-    BTN_DWN.init();
-    BTN_LFT.init();
-    BTN_RHT.init();
-    BTN_MID.init();
-    BTN_SET.init();
-    BTN_RST.init();
     
+
     while (1)
     {
         fill(st7796, 0xFFFF);

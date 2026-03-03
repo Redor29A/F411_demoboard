@@ -3,7 +3,7 @@
 #ifndef __DISPLAY_LIB_H
 #define __DISPLAY_LIB_H
 
-#include <cstdint>
+#include "ST7796_lib.h"
 
 #define WIDTH 	320
 #define HEIGHT 	480
@@ -29,38 +29,24 @@ class display
 {
 
 public:
-    display(uint16_t width, uint16_t height);
-    void pushColor(uint16_t color);
+    display(ST7796& st7796, uint16_t width, uint16_t height);
     void fillScreen(uint16_t color=BLACK);
-    void clearScreen() { fillScreen(BLACK); }
-    void cls() { fillScreen(BLACK); }
     void drawPixel(int16_t x, int16_t y, uint16_t color);
     void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
     void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
     void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
     void drawImage(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *img);
     void drawImageF(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *img16);
-    void setRotation(uint8_t r);
-    void invertDisplay(bool mode);
-    void partialDisplay(bool mode);
-    void sleepDisplay(bool mode);
-    void enableDisplay(bool mode);
-    void idleDisplay(bool mode);
     void resetDisplay();
-    void setScrollArea(uint16_t tfa, uint16_t bfa);
-    void setScroll(uint16_t vsp);
-    void setPartArea(uint16_t sr, uint16_t er);
-    void setBrightness(uint8_t br);
-    void powerSave(uint8_t mode);
-    void setCGRAM(uint8_t xs, uint8_t xe, uint8_t ys, uint8_t ye);
 
     uint16_t Color565(uint8_t r, uint8_t g, uint8_t b);
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b) { return Color565(r, g, b); } 
     void rgbWheel(int idx, uint8_t *_r, uint8_t *_g, uint8_t *_b);
     uint16_t rgbWheel(int idx);
 private:
-    /* data */
-
+    ST7796& st7796;
+    uint16_t width;
+    uint16_t height;
 };
 
 
