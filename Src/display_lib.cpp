@@ -27,7 +27,7 @@ void display::drawPixel(int16_t x, int16_t y, uint16_t color){
 }
 
 void display::drawVLine(int16_t x, int16_t y1, int16_t y2, uint16_t color, uint8_t thicknes){
-    st7796.set_memory_area(x, y1, x+thicknes, y2);
+    st7796.set_memory_area(x, y1, x+thicknes, y2+1);
 
     st7796.memory_write_start();
 
@@ -40,7 +40,7 @@ void display::drawVLine(int16_t x, int16_t y1, int16_t y2, uint16_t color, uint8
 }
 
 void display::drawHLine(int16_t y, int16_t x1, int16_t x2, uint16_t color, uint8_t thicknes){
-    st7796.set_memory_area(x1, y, x2, y+thicknes);
+    st7796.set_memory_area(x1, y, x2+1, y+thicknes);
 
     st7796.memory_write_start();
 

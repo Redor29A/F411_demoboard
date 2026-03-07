@@ -209,12 +209,17 @@ int main(void)
 
     display disp(st7796, 479, 319);
 
-    disp.drawImage(0, 0, 479, 319, bitmap);
+    //disp.drawImage(0, 0, 479, 319, bitmap);
 
     delay_ms(1000);
 
     while (1)
     {
+        disp.drawHLine(50, 10, 100, RGB565_CYAN);
+        disp.drawVLine(250, 80, 130, RGB565_BLUE);
+        disp.drawPixel(130, 20, RGB565_GREEN);
+        disp.drawVLine(300, 80, 130, RGB565_BLUE, 5);
+
         /*fill(st7796, 0xFFFF);
         delay_ms(1000);
 
