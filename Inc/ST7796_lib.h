@@ -93,31 +93,30 @@ class ST7796 {
     public:
 
         ST7796(SPIx& spi, GPIOx& DC, GPIOx& CS, GPIOx& RST);
-        //void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){column_addres_set(xs, xe); row_addres_set(ys, ye);}
-        void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
-        //void column_addres_set(uint16_t xs, uint16_t xe){write_cmd(ST7796_CMD_CASET); write_data16(xs); write_data16(xe);}
-        //void row_addres_set(uint16_t ys, uint16_t ye){write_cmd(ST7796_CMD_RASET); write_data16(ys); write_data16(ye);}
-        void column_addres_set(uint16_t xs, uint16_t xe);
-        void row_addres_set(uint16_t ys, uint16_t ye);
+        void display_reset();
+        void set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){column_addres_set(xs, xe); row_addres_set(ys, ye);}
+        void column_addres_set(uint16_t xs, uint16_t xe){write_cmd(ST7796_CMD_CASET); write_data16(xs); write_data16(xe);}
+        void row_addres_set(uint16_t ys, uint16_t ye){write_cmd(ST7796_CMD_RASET); write_data16(ys); write_data16(ye);}
         void set_inversion(bool inv){if(inv) set_inversion_on(); else set_inversion_off();}
         void set_inversion_on(){write_cmd(ST7796_CMD_INVON);}
         void set_inversion_off(){write_cmd(ST7796_CMD_INVOFF);}
+        void set_sleep(bool sleep){if(sleep) sleep_in(); else sleep_out();}
         void sleep_in(){write_cmd(ST7796_CMD_SLPIN);}
         void sleep_out(){write_cmd(ST7796_CMD_SLPOUT);}
+        void set_display(bool display){if(display) display_on(); else display_off();}
         void display_on(){write_cmd(ST7796_CMD_DISPON);}
         void display_off(){write_cmd(ST7796_CMD_DISPOFF);}
+        void set_partial(bool partial){if(partial) partial_mode_on(); else normal_mode_on();}
         void partial_mode_on(){write_cmd(ST7796_CMD_PTLON);}
         void normal_mode_on(){write_cmd(ST7796_CMD_NORON);}
         void memory_write(uint8_t data_8);
         void memory_write(uint16_t data_16);
         void memory_write_start();
         void memory_write_end();
-        void set_pixel(uint16_t x, uint16_t y, uint16_t color);
-        void write_multi(uint16_t color, uint16_t num);
-        void copy_multi(uint8_t *img, uint16_t num);
+        void write_from_mass(const uint16_t *img, uint32_t num);
         void write_cmd(uint8_t c);
-        void write_data(uint8_t d8);
-        void write_data16(uint16_t d16);
+        void write_data(uint8_t data_8);
+        void write_data16(uint16_t data_16);
     private:
         SPIx& spi; 
         GPIOx& DC;

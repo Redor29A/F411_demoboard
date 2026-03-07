@@ -1,39 +1,16 @@
 #include "ST7796_lib.h"
 
 ST7796::ST7796(SPIx& spi, GPIOx& DC, GPIOx& CS, GPIOx& RST): spi(spi), DC(DC), CS(CS), RST(RST){
-    //CS.high(); 
+    CS.high(); 
     RST.high();
 }
 
-void ST7796::set_memory_area(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye){
-    write_cmd(ST7796_CMD_CASET);  // Column
-    write_data(xs >> 8);
-    write_data(xs);
-    write_data(xe >> 8);
-    write_data(xe);
+void ST7796::display_reset(){
+    RST.low();
+    for(uint32_t t=0; t < 60000; t++){__NOP();}
 
-    write_cmd(ST7796_CMD_RASET);  // Row
-    write_data(ys >> 8);
-    write_data(ys);
-    write_data(ye >> 8);
-    write_data(ye);
-}
-
-void ST7796::column_addres_set(uint16_t xs, uint16_t xe){
-    write_cmd(ST7796_CMD_CASET);  // Column
-    write_data(xs >> 8);
-    write_data(xs);
-    write_data(xe >> 8);
-    write_data(xe);
-
-}
-
-void ST7796::row_addres_set(uint16_t ys, uint16_t ye){
-    write_cmd(ST7796_CMD_RASET);  // Row
-    write_data(ys >> 8);
-    write_data(ys);
-    write_data(ye >> 8);
-    write_data(ye);
+    RST.high();
+    for(uint32_t t=0; t < 600000; t++){__NOP();}
 }
 
 void ST7796::memory_write_start(){
@@ -56,21 +33,11 @@ void ST7796::memory_write(uint16_t data_16){
     spi.write(data_16);
 }
 
-void ST7796::set_pixel(uint16_t x, uint16_t y, uint16_t color){
-    set_memory_area(x, y, x, y);
-    DC.high();
-    CS.low();
-    spi.write(color >> 8);
-    spi.write(color);
-    //CS.high();
-}
-
-void ST7796::write_multi(uint16_t color, uint16_t num){
-
-}
-
-void ST7796::copy_multi(uint8_t *img, uint16_t num){
-
+void ST7796::write_from_mass(const uint16_t *img, uint32_t num){
+     for (uint32_t i = 0; i < num; i++) {
+        spi.write(img[i] >> 8);
+        spi.write(img[i]);
+    }
 }
 
 void ST7796::write_cmd(uint8_t cmd){
@@ -78,15 +45,13 @@ void ST7796::write_cmd(uint8_t cmd){
     CS.low();
     spi.write(cmd);
     //CS.high();
-
 }
 
-void ST7796::write_data(uint8_t data){
+void ST7796::write_data(uint8_t data_8){
     DC.high();
     CS.low();
-    spi.write(data);
+    spi.write(data_8);
     //CS.high();
-
 }
 
 void ST7796::write_data16(uint16_t data_16){

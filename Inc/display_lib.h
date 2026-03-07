@@ -32,12 +32,10 @@ public:
     display(ST7796& st7796, uint16_t width, uint16_t height);
     void fillScreen(uint16_t color=BLACK);
     void drawPixel(int16_t x, int16_t y, uint16_t color);
-    void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-    void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-    void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-    void drawImage(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *img);
-    void drawImageF(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *img16);
-    void resetDisplay();
+    void drawVLine(int16_t x, int16_t y1, int16_t y2, uint16_t color, uint8_t thicknes);
+    void drawHLine(int16_t y, int16_t x1, int16_t x2, uint16_t color, uint8_t thicknes=1);
+    void fillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+    void drawImage(int16_t x1, int16_t y1, int16_t x2, int16_t y2, const uint16_t* img);
 
     uint16_t Color565(uint8_t r, uint8_t g, uint8_t b);
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b) { return Color565(r, g, b); } 

@@ -141,7 +141,7 @@ void display_reset(GPIOx& rst){
 }
 
 void fill(ST7796 st7796, uint16_t color){
-    st7796.set_memory_area(0, 0, 319, 479);
+    st7796.set_memory_area(0, 0, 479, 319);
 
     st7796.memory_write_start();
 
@@ -173,25 +173,25 @@ int main(void)
     GPIOx RST(GPIOA, 3, GPIOx::ModeOutput, GPIOx::PullNone,
                 GPIOx::OTypePushPull, GPIOx::SpeedHigh);
 
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
     SPIx spi(SPI1, SPIx::ModeMaster, SPIx::DirectionFullDuplex,
                 SPIx::DataSize8, SPIx::ClockPol_Low, SPIx::ClockPhase_1Edge,
                 SPIx::Software_NSS, SPIx::BaudRate_Div2, SPIx::FirstBit_MSB);
-        
-
-    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //тактирование SPI1
+    
     ST7796 st7796(spi, DC, CS, RST);
 
     BL.set();
+    //st7796.display_reset();
     display_reset(RST);
-    st7796.sleep_out();
     delay_ms(120);
+    st7796.sleep_out();
     st7796.write_cmd(ST7796_CMD_MADCTL);
     st7796.write_data(0x28); // поворот + RGB
     st7796.write_cmd(ST7796_CMD_COLMOD);
     st7796.write_data(0x55); // Pixel format 16-bit
     st7796.set_inversion_off();
     st7796.display_on();
-    delay_ms(20);
+    delay_ms(100);
 
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; 
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
@@ -204,18 +204,24 @@ int main(void)
     GPIOx BTN_RST(GPIOB, 7, GPIOx::ModeInput, GPIOx::PullUp);
     GPIOx LED(GPIOC, 13, GPIOx::ModeOutput, GPIOx::PullNone,
              GPIOx::OTypePushPull, GPIOx::SpeedHigh);
- 
     
+    fill(st7796, 0xFFFF);
+
+    display disp(st7796, 479, 319);
+
+    disp.drawImage(0, 0, 479, 319, bitmap);
+
+    delay_ms(1000);
 
     while (1)
     {
-        fill(st7796, 0xFFFF);
+        /*fill(st7796, 0xFFFF);
         delay_ms(1000);
 
         fill(st7796, 0x0000);
         delay_ms(1000);
 
-        LED.toggle();
+        LED.toggle();*/
     }
 }
 
